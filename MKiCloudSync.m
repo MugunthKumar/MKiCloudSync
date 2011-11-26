@@ -20,9 +20,7 @@
 @implementation MKiCloudSync
 
 +(void) updateToiCloud:(NSNotification*) notificationObject {
-    
-    NSLog(@"Updating to iCloud");
-    
+        
     NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
     
     [dict enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
@@ -34,9 +32,7 @@
 }
 
 +(void) updateFromiCloud:(NSNotification*) notificationObject {
-    
-    NSLog(@"Updating from iCloud");
-    
+        
     NSUbiquitousKeyValueStore *iCloudStore = [NSUbiquitousKeyValueStore defaultStore];
     NSDictionary *dict = [iCloudStore dictionaryRepresentation];
     
@@ -64,7 +60,7 @@
 
 +(void) start {
     
-    if(NSClassFromString(@"NSUbiquitousKeyValueStore")) { // is iOS 5?
+    if([NSUbiquitousKeyValueStore class] != nil)) { // is iOS 5?
         
         if([NSUbiquitousKeyValueStore defaultStore]) {  // is iCloud enabled
             
@@ -76,15 +72,7 @@
             [[NSNotificationCenter defaultCenter] addObserver:self 
                                                      selector:@selector(updateToiCloud:) 
                                                          name:NSUserDefaultsDidChangeNotification                                                    object:nil];
-        } else {
-            
-            NSLog(@"iCloud not enabled");
-            
         }
-    }
-    else {
-        
-        NSLog(@"Not an iOS 5 device");        
     }
 }
 
