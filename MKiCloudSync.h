@@ -14,6 +14,15 @@
 //  A note on redistribution
 //	if you are re-publishing after editing, please retain the above copyright notices
 
+#ifdef DEBUG
+#   define DLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#else
+#   define DLog(...)
+#endif
+
+// ALog always displays output regardless of the DEBUG setting
+#define ALog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+
 #import <Foundation/Foundation.h>
 #define kMKiCloudSyncNotification @"MKiCloudSyncDidUpdateToLatest"
 

@@ -21,10 +21,6 @@
 
 +(void) updateToiCloud:(NSNotification*) notificationObject {
     
-#ifdef DEBUG
-    NSLog(@"Updating to iCloud");
-#endif
-    
     NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
     
     [dict enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
@@ -37,10 +33,6 @@
 
 +(void) updateFromiCloud:(NSNotification*) notificationObject {
     
-#ifdef DEBUG
-    NSLog(@"Updating from iCloud");
-#endif
-  
     NSUbiquitousKeyValueStore *iCloudStore = [NSUbiquitousKeyValueStore defaultStore];
     NSDictionary *dict = [iCloudStore dictionaryRepresentation];
     
@@ -61,7 +53,8 @@
 
     [[NSNotificationCenter defaultCenter] addObserver:self 
                                              selector:@selector(updateToiCloud:) 
-                                                 name:NSUserDefaultsDidChangeNotification                                                    object:nil];
+                                                 name:NSUserDefaultsDidChangeNotification                                                    
+												object:nil];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kMKiCloudSyncNotification object:nil];
 }
@@ -80,17 +73,13 @@
             [[NSNotificationCenter defaultCenter] addObserver:self 
                                                      selector:@selector(updateToiCloud:) 
                                                          name:NSUserDefaultsDidChangeNotification                                                    object:nil];
-#ifdef DEBUG
         } else {
-            NSLog(@"iCloud not enabled");          
-#endif
+            DLog(@"iCloud not enabled");          
         }
     }
-#ifdef DEBUG
     else {
-        NSLog(@"Not an iOS 5 device");        
+        DLog(@"Not an iOS 5 device");        
     }
-#endif
 }
 
 + (void) dealloc {
