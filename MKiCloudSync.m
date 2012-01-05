@@ -41,7 +41,7 @@
 	if ([NSUbiquitousKeyValueStore class] && [NSUbiquitousKeyValueStore defaultStore])
 	{
 		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pullFromICloud:) name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification object: [NSUbiquitousKeyValueStore defaultStore]];
-		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pushToICloud:) name: NSUserDefaultsDidChangeNotification object: [NSUserDefaults defaultStore]];
+		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pushToICloud:) name: NSUserDefaultsDidChangeNotification object: [NSUserDefaults standardUserDefaults]];
 		
 		return YES;
 	}
@@ -80,7 +80,7 @@
 	NSArray *changedKeys = [note.userInfo objectForKey: NSUbiquitousKeyValueStoreChangedKeysKey];
 	
 	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-	[changedKeys enumerateObjectsUsingBlock: ^(NSString *key, BOOL *stop) {
+	[changedKeys enumerateObjectsUsingBlock: ^(NSString *key, NSUInteger idx, BOOL *stop) {
 		id obj = [store objectForKey: key];
 		[userDefaults setObject: obj forKey: key];
 	}];
