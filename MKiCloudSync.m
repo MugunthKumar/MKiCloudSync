@@ -24,8 +24,10 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-
 #import "MKiCloudSync.h"
+
+NSString *MKiCloudSyncDidPullFromICloudNotification = @"MKiCloudSyncDidPullFromICloudNotification";
+NSString *MKiCloudSyncDidPushToICloudNotification = @"MKiCloudSyncDidPushToICloudNotification";
 
 @interface MKiCloudSync ()
 
@@ -50,9 +52,7 @@
 }
 + (void) stop
 {
-	NSNotificationCenter *dnc = [NSNotificationCenter defaultCenter];
-	[dnc removeObserver: self name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification object: nil];
-	[dnc removeObserver: self name: NSUserDefaultsDidChangeNotification object: nil];
+	[[NSNotificationCenter defaultCenter] removeObserver: self];
 }
 
 + (void) pushToICloud: (NSNotification *) note
@@ -64,12 +64,14 @@
 	
 	NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
 	[persistentDomain enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
-		[store setObject:obj forKey:key];
+		[store setObject: obj forKey: key];
 	}];
 	
 	[store synchronize];
 	
 	[self start];
+	
+	[[NSNotificationCenter defaultCenter] postNotificationName: MKiCloudSyncDidPushToICloudNotification object: self userInfo: note.userInfo];
 }
 + (void) pullFromICloud: (NSNotification *) note
 {
@@ -88,6 +90,8 @@
 	[userDefaults synchronize];
 	
 	[self start];
+	
+	[[NSNotificationCenter defaultCenter] postNotificationName: MKiCloudSyncDidPullFromICloudNotification object: self userInfo: note.userInfo];
 }
 
 @end

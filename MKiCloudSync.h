@@ -26,6 +26,9 @@
 
 #import <Foundation/Foundation.h>
 
+extern NSString *MKiCloudSyncDidPullFromICloudNotification;
+extern NSString *MKiCloudSyncDidPushToICloudNotification;
+
 @interface MKiCloudSync : NSObject
 
 + (BOOL) start;
