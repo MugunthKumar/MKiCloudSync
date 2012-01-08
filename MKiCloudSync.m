@@ -24,15 +24,14 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-#import "MKiCloudSync.h"
 
-NSString *MKiCloudSyncDidPullFromICloudNotification = @"MKiCloudSyncDidPullFromICloudNotification";
-NSString *MKiCloudSyncDidPushToICloudNotification = @"MKiCloudSyncDidPushToICloudNotification";
+#import "MKiCloudSync.h"
 
 @interface MKiCloudSync ()
 
-+ (void) pushToICloud: (NSNotification *) note;
++ (void) pushToICloud;
 + (void) pullFromICloud: (NSNotification *) note;
++ (void) clean;
 
 @end
 
@@ -42,8 +41,28 @@ NSString *MKiCloudSyncDidPushToICloudNotification = @"MKiCloudSyncDidPushToIClou
 {
 	if ([NSUbiquitousKeyValueStore class] && [NSUbiquitousKeyValueStore defaultStore])
 	{
-		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pullFromICloud:) name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification object: [NSUbiquitousKeyValueStore defaultStore]];
-		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pushToICloud:) name: NSUserDefaultsDidChangeNotification object: [NSUserDefaults standardUserDefaults]];
+        //  FORCE PUSH
+        [MKiCloudSync pushToICloud];
+        //
+        
+        //  FORCE PULL
+        NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+        
+        NSDictionary *dict = [store dictionaryRepresentation];
+        NSLog(@"!!! UPDATING FROM ICLOUD !!! %@", dict);
+        
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        [dict enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
+            [userDefaults setObject: obj forKey: key];
+        }];
+        
+        [userDefaults synchronize];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName: kMKiCloudSyncNotification object: nil];
+        //
+        
+		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pullFromICloud:) name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification object: store];
+		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pushToICloud) name: NSUserDefaultsDidChangeNotification object: nil];
 		
 		return YES;
 	}
@@ -55,12 +74,16 @@ NSString *MKiCloudSyncDidPushToICloudNotification = @"MKiCloudSyncDidPushToIClou
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
 }
 
-+ (void) pushToICloud: (NSNotification *) note
++ (void) pushToICloud
 {
-	[self stop];
-	
 	NSString *identifier = [[NSBundle mainBundle] bundleIdentifier];
-	NSDictionary *persistentDomain = [[NSUserDefaults standardUserDefaults] persistentDomainForName: identifier];
+	NSMutableDictionary *persistentDomain = [NSMutableDictionary dictionaryWithDictionary: [[NSUserDefaults standardUserDefaults] persistentDomainForName: identifier]];
+        
+        //  EXCL. SPECIAL KEYS LIKE DEVICE-SPECIFIC ONES
+    [persistentDomain removeObjectsForKeys: [NSArray arrayWithObjects: @"iCloudSync", nil]];
+        //
+        
+    NSLog(@"!!! UPDATING TO ICLOUD !!! %@", persistentDomain);
 	
 	NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
 	[persistentDomain enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
@@ -68,18 +91,15 @@ NSString *MKiCloudSyncDidPushToICloudNotification = @"MKiCloudSyncDidPushToIClou
 	}];
 	
 	[store synchronize];
-	
-	[self start];
-	
-	[[NSNotificationCenter defaultCenter] postNotificationName: MKiCloudSyncDidPushToICloudNotification object: self userInfo: note.userInfo];
 }
 + (void) pullFromICloud: (NSNotification *) note
 {
-	[self stop];
+	[[NSNotificationCenter defaultCenter] removeObserver: self name: NSUserDefaultsDidChangeNotification object: nil];
 	
 	NSUbiquitousKeyValueStore *store = note.object;
 	
 	NSArray *changedKeys = [note.userInfo objectForKey: NSUbiquitousKeyValueStoreChangedKeysKey];
+    NSLog(@"!!! UPDATING FROM ICLOUD !!! %@", changedKeys);
 	
 	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
 	[changedKeys enumerateObjectsUsingBlock: ^(NSString *key, NSUInteger idx, BOOL *stop) {
@@ -89,9 +109,34 @@ NSString *MKiCloudSyncDidPushToICloudNotification = @"MKiCloudSyncDidPushToIClou
 	
 	[userDefaults synchronize];
 	
-	[self start];
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(pushToICloud) name: NSUserDefaultsDidChangeNotification object: nil];
 	
-	[[NSNotificationCenter defaultCenter] postNotificationName: MKiCloudSyncDidPullFromICloudNotification object: self userInfo: note.userInfo];
+	[[NSNotificationCenter defaultCenter] postNotificationName: kMKiCloudSyncNotification object: nil];
+}
+
++ (void) clean {
+    [self stop];
+    
+    NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+    
+	NSDictionary *dict = [store dictionaryRepresentation];
+    [dict enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
+        //  NON-NIL TO KEEP KEY
+		[store setObject: @"" forKey: key];
+	}];
+    
+    [store synchronize];
+    NSLog(@"!!! CLEANING ICLOUD !!! %@", [store dictionaryRepresentation]);
+}
+
++ (void)dealloc {
+        //  DOES ANYONE KNOW HOW LONG THIS IS KEPT ALIVE?
+        //  SOMETIMES I FELT LIKE THE CLASS STOPPED WORKING,
+        //  HOWEVER AFTER IMPLEMENTING THIS,
+        //  THE LOG NEVER APPEARED FOR ME.
+    NSLog(@"!!! FOR DEBUGGING PURPOSES ONLY !!!");
+    [super dealloc];
+        //
 }
 
 @end
