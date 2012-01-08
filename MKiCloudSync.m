@@ -121,8 +121,9 @@
     
 	NSDictionary *dict = [store dictionaryRepresentation];
     [dict enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
-        //  NON-NIL TO KEEP KEY
+        //  NON-NIL TO KEEP KEY, NIL TO LOOSE KEY
 		[store setObject: @"" forKey: key];
+        //
 	}];
     
     [store synchronize];
