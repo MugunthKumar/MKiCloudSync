@@ -25,13 +25,12 @@
 //  THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
-
-extern NSString *MKiCloudSyncDidPullFromICloudNotification;
-extern NSString *MKiCloudSyncDidPushToICloudNotification;
+#define kMKiCloudSyncNotification @"MKiCloudSyncDidUpdateToLatest"
 
 @interface MKiCloudSync : NSObject
 
 + (BOOL) start;
 + (void) stop;
++ (void) clean;
 
 @end
