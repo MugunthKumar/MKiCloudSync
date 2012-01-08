@@ -25,12 +25,20 @@
 //  THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
-#define kMKiCloudSyncNotification @"MKiCloudSyncDidUpdateToLatest"
+
+// Change to 1 to enable logging
+#define MKiCloudSyncDebug 1
+
+// Posted
+extern NSString *MKiCloudSyncDidUpdateNotification;
 
 @interface MKiCloudSync : NSObject
 
 + (BOOL) start;
+
++ (NSMutableSet *) ignoredKeys;
+
++ (void) cleanUbiquitousStore;
 + (void) stop;
-+ (void) clean;
 
 @end
