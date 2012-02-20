@@ -27,7 +27,7 @@
 #import <Foundation/Foundation.h>
 
 // Change to 1 to enable logging
-#define MKiCloudSyncDebug 1
+#define MKiCloudSyncDebug 0
 
 // Posted
 extern NSString *MKiCloudSyncDidUpdateNotification;
