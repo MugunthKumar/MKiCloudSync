@@ -34,6 +34,8 @@ extern NSString *MKiCloudSyncDidUpdateNotification;
 
 @interface MKiCloudSync : NSObject
 
++ (BOOL) isSyncing;
+
 + (BOOL) start;
 
 + (NSMutableSet *) ignoredKeys;
