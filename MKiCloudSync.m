@@ -33,41 +33,82 @@ NSString *MKiCloudSyncDidUpdateNotification = @"MKiCloudSyncDidUpdateNotificatio
 + (void) pullFromICloud: (NSNotification *) note;
 + (void) pushToICloud;
 
++ (BOOL)tryToStartSync;
+
 @end
 
 @implementation MKiCloudSync
+
+static dispatch_queue_t _queue;
+static BOOL _isSyncing;
+
++ (void)initialize
+{
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		_queue = dispatch_queue_create("com.mugunthkumarMKiCloudSync", DISPATCH_QUEUE_SERIAL);
+		_isSyncing = NO;
+	});
+}
+
++ (BOOL) isSyncing
+{
+	__block BOOL isSyncing = NO;
+	dispatch_sync(_queue, ^{
+		isSyncing = _isSyncing;
+	});
+	return isSyncing;
+}
+
++ (BOOL)tryToStartSync
+{
+	__block BOOL didSucceed = NO;
+	dispatch_sync(_queue, ^{
+		if (!_isSyncing) {
+			_isSyncing = YES;
+			didSucceed = YES;
+		}
+	});
+	return didSucceed;
+}
 
 + (BOOL) start
 {
 	if ([NSUbiquitousKeyValueStore class] && [NSUbiquitousKeyValueStore defaultStore])
 	{
-		// Force push
-		[MKiCloudSync pushToICloud];
-		
-		// Force pull
-		NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
-		NSDictionary *dict = [store dictionaryRepresentation];
-		
-		NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-		[dict enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
-			[userDefaults setObject: obj forKey: key];
-		}];
-		[userDefaults synchronize];
-		
-		NSNotificationCenter *dnc = [NSNotificationCenter defaultCenter];
-		
-		// Post notification
-		[dnc postNotificationName: MKiCloudSyncDidUpdateNotification object: self];
-		
-		// Add self as observer
-		[dnc addObserver: self selector: @selector(pullFromICloud:) name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification object: store];
-		[dnc addObserver: self selector: @selector(pushToICloud) name: NSUserDefaultsDidChangeNotification object: nil];
-		
+		if ([self tryToStartSync]) {
 #if MKiCloudSyncDebug
-		NSLog(@"MKiCloudSync: Updating from iCloud");
+			NSLog(@"MKiCloudSync: Will start sync");
 #endif
-		
-		return YES;
+			
+			// Force push
+			[MKiCloudSync pushToICloud];
+			
+			// Force pull
+			NSUbiquitousKeyValueStore *store = [NSUbiquitousKeyValueStore defaultStore];
+			NSDictionary *dict = [store dictionaryRepresentation];
+			
+			NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+			[dict enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
+				[userDefaults setObject: obj forKey: key];
+			}];
+			[userDefaults synchronize];
+			
+			NSNotificationCenter *dnc = [NSNotificationCenter defaultCenter];
+			
+			// Post notification
+			[dnc postNotificationName: MKiCloudSyncDidUpdateNotification object: self];
+			
+			// Add self as observer
+			[dnc addObserver: self selector: @selector(pullFromICloud:) name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification object: store];
+			[dnc addObserver: self selector: @selector(pushToICloud) name: NSUserDefaultsDidChangeNotification object: nil];
+			
+#if MKiCloudSyncDebug
+			NSLog(@"MKiCloudSync: Did start sync");
+			NSLog(@"MKiCloudSync: Updating from iCloud");
+#endif		
+			return YES;
+		}
 	}
 	
 	return NO;
@@ -147,7 +188,13 @@ NSString *MKiCloudSyncDidUpdateNotification = @"MKiCloudSyncDidUpdateNotificatio
 }
 + (void) stop
 {
-	[[NSNotificationCenter defaultCenter] removeObserver: self];
+#if MKiCloudSyncDebug
+	NSLog(@"MKiCloudSync: Stop syncining with iCloud");
+#endif
+	dispatch_sync(_queue, ^{
+		_isSyncing = NO;
+		[[NSNotificationCenter defaultCenter] removeObserver: self];
+	});
 }
 
 @end
