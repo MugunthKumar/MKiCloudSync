@@ -30,12 +30,11 @@
 #define MKiCloudSyncDebug 0
 
 // Posted
-extern NSString *MKiCloudSyncDidUpdateNotification;
+extern NSString *const MKiCloudSyncDidUpdateNotification;
 
 @interface MKiCloudSync : NSObject
 
 + (BOOL) isSyncing;
-
 + (BOOL) start;
 
 + (NSMutableSet *) ignoredKeys;
