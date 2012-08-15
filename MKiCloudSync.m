@@ -27,18 +27,19 @@
 //	1) tweeting about this mentioning @mugunthkumar
 //	2) A paypal donation to mugunth.kumar@gmail.com
 
-
 #import "MKiCloudSync.h"
 
 @implementation MKiCloudSync
 
+static NSMutableSet *syncKeys = nil;
+
 +(void) updateToiCloud:(NSNotification*) notificationObject {
     
     NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
-    
     [dict enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-        
-        [[NSUbiquitousKeyValueStore defaultStore] setObject:obj forKey:key];
+        if (!syncKeys || [syncKeys containsObject:key]) {
+            [[NSUbiquitousKeyValueStore defaultStore] setObject:obj forKey:key];
+        }
     }];
     
     [[NSUbiquitousKeyValueStore defaultStore] synchronize];
@@ -72,6 +73,17 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kMKiCloudSyncNotification object:nil];
 }
 
++(void) startWithSyncKeys:(NSArray *)keys {
+    if (keys) {
+        syncKeys = [NSMutableSet set];
+        [syncKeys addObjectsFromArray:keys];
+#if !__has_feature(objc_arc)
+        [syncKeys retain];
+#endif
+    }
+    [MKiCloudSync start];
+}
+
 +(void) start {
     
     if(NSClassFromString(@"NSUbiquitousKeyValueStore")) { // is iOS 5?
@@ -85,7 +97,8 @@
             
             [[NSNotificationCenter defaultCenter] addObserver:self 
                                                      selector:@selector(updateToiCloud:) 
-                                                         name:NSUserDefaultsDidChangeNotification                                                    object:nil];
+                                                         name:NSUserDefaultsDidChangeNotification
+                                                       object:nil];
         } else {
             DLog(@"iCloud not enabled");          
         }
@@ -96,6 +109,9 @@
 }
 
 + (void) dealloc {
+#if !__has_feature(objc_arc)
+    if (syncKeys) [syncKeys release];
+#endif
     
     [[NSNotificationCenter defaultCenter] removeObserver:self 
                                                     name:NSUbiquitousKeyValueStoreDidChangeExternallyNotification 
