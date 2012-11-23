@@ -2,7 +2,7 @@
 A clean and simple class to sync NSUserDefaults to iCloud.
 
 ### How to use?
-1. Drag the two classes and #import the header file in your Application Delegate
+1. Drag the two files and #import the header file in your Application Delegate
 2. Call [MKiCloudSync start];
 3. There is no Step 3.
 
