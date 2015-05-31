@@ -41,5 +41,5 @@
 
 @interface MKiCloudSync : NSObject
 
-+(void) start;
++(void) startWithPrefix:(NSString*) prefixToSync;
 @end
