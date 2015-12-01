@@ -50,10 +50,7 @@ static NSString *prefix;
 +(void) updateFromiCloud:(NSNotification*) notificationObject {
 
   NSUbiquitousKeyValueStore *iCloudStore = [NSUbiquitousKeyValueStore defaultStore];
-  NSDictionary *dict = [iCloudStore dictionaryRepresentation];
-
-  NSArray* changedKeys = [[notificationObject userInfo] objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
-  NSUbiquitousKeyValueStore *iCloudStore = [NSUbiquitousKeyValueStore defaultStore];
+  NSArray *changedKeys = [[notificationObject userInfo] objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
   NSDictionary *dict = [[iCloudStore dictionaryRepresentation] dictionaryWithValuesForKeys:changedKeys];
 
   [[NSNotificationCenter defaultCenter] removeObserver:self
