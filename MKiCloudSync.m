@@ -52,7 +52,9 @@ static NSString *prefix;
   NSUbiquitousKeyValueStore *iCloudStore = [NSUbiquitousKeyValueStore defaultStore];
   NSDictionary *dict = [iCloudStore dictionaryRepresentation];
 
-  // prevent NSUserDefaultsDidChangeNotification from being posted while we update from iCloud
+  NSArray* changedKeys = [[notificationObject userInfo] objectForKey:NSUbiquitousKeyValueStoreChangedKeysKey];
+  NSUbiquitousKeyValueStore *iCloudStore = [NSUbiquitousKeyValueStore defaultStore];
+  NSDictionary *dict = [[iCloudStore dictionaryRepresentation] dictionaryWithValuesForKeys:changedKeys];
 
   [[NSNotificationCenter defaultCenter] removeObserver:self
                                                   name:NSUserDefaultsDidChangeNotification
